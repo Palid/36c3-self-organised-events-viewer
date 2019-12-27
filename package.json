@@ -10,6 +10,12 @@
   "dependencies": {
     "next": "9.1.6",
     "react": "16.12.0",
-    "react-dom": "16.12.0"
+    "react-dom": "16.12.0",
+    "react-virtualized": "^9.21.2"
+  },
+  "devDependencies": {
+    "@types/node": "^13.1.1",
+    "@types/react": "^16.9.17",
+    "typescript": "^3.7.4"
   }
 }
