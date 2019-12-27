@@ -27,7 +27,7 @@ export interface Day {
 }
 
 export interface Rooms {
-  [room: string]: Event;
+  [room: string]: Event[];
 }
 
 export interface Event {
