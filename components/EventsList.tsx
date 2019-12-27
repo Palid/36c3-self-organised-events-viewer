@@ -18,12 +18,13 @@ import {
   RadioGroup
 } from "@material-ui/core";
 
+import { CONFIG } from "../config";
+
 interface EventWithRoom extends Event {
   room: string;
 }
 
 const parseData = (schedule: Schedule, day: number): EventWithRoom[] => {
-  debugger;
   const rooms = schedule.conference.days[day].rooms;
   const data = [];
   for (const room in rooms) {
@@ -55,7 +56,10 @@ const EventsList = () => {
 
   const prepareData = (data: RootObject) => {
     let preparedData = parseData(data.schedule, day);
-    preparedData = lodash.sortBy(preparedData, [sortBy]);
+    // Show only self organised
+    preparedData = preparedData.filter(
+      x => x.track === "self organized sessions"
+    );
     preparedData = preparedData.filter(event => {
       if (language.english && event.language === "en") {
         return true;
@@ -78,6 +82,7 @@ const EventsList = () => {
           event.room.toLowerCase().includes(lowerF)
       );
     }
+    preparedData = lodash.sortBy(preparedData, [sortBy]);
     if (sortDirection === SortDirection.DESC) {
       preparedData = preparedData.reverse();
     }
@@ -86,7 +91,7 @@ const EventsList = () => {
 
   useEffect(() => {
     if (!data) {
-      fetch("http://localhost:3001/schedule")
+      fetch(`${CONFIG.domain}/schedule`)
         .then(x => x.json())
         .then((x: RootObject) => {
           setData(x);
@@ -185,7 +190,10 @@ const EventsList = () => {
       </FormGroup>
       <div
         style={{
-          minHeight: "calc(100vh - 48px - 56px)",
+          minHeight:
+            globalThis && globalThis.outerWidth < 920
+              ? "calc(100vh - 188px)"
+              : "calc(100vh - 48px - 56px)",
           display: "flex",
           flex: 1,
           paddingBottom: 24
@@ -210,15 +218,17 @@ const EventsList = () => {
                 setSortDirection(sortDirection);
               }}
             >
-              <Column dataKey="room" label="Room" width={50} flexGrow={1} />
+              <Column
+                dataKey="room"
+                label="Room"
+                width={50}
+                flexGrow={globalThis && globalThis.outerWidth >= 512 ? 1 : 0}
+              />
 
               <Column dataKey="title" label="Title" width={100} flexGrow={1} />
-              <Column
-                dataKey="subtitle"
-                label="Subtitle"
-                width={200}
-                flexGrow={1}
-              />
+              {globalThis && globalThis.outerWidth >= 1024 && (
+                <Column dataKey="subtitle" label="Subtitle" width={200} />
+              )}
               <Column
                 dataKey="date"
                 width={50}
@@ -255,6 +265,8 @@ const EventsList = () => {
               text-overflow: ellipsis;
               white-space: nowrap;
               overflow: hidden;
+              padding-left: 8px;
+              padding-right: 8px;
             }
             .ReactVirtualized__Table__headerColumn {
               display: inline-block;

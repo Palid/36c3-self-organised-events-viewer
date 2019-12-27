@@ -7,7 +7,7 @@ import { Container } from "@material-ui/core";
 const Home = () => (
   <>
     <Head>
-      <title>Home</title>
+      <title>36C3 self-organised sessions finder</title>
       <link rel="icon" href="/favicon.ico" />
       <link
         href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed&display=swap"
