@@ -231,12 +231,11 @@ const EventsList = () => {
               )}
               <Column
                 dataKey="date"
-                width={50}
+                width={70}
                 label="Date"
-                flexGrow={1}
                 cellRenderer={({ cellData }) => {
                   const l = DateTime.fromISO(cellData);
-                  return l.toLocaleString(DateTime.DATETIME_SHORT);
+                  return l.toFormat("dd, HH:mm");
                 }}
               />
             </Table>
