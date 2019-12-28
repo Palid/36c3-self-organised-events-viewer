@@ -30,6 +30,8 @@ export interface Rooms {
   [room: string]: Event[];
 }
 
+export type Language = "en" | "de" | "other";
+
 export interface Event {
   url: string;
   id: number;
@@ -44,7 +46,7 @@ export interface Event {
   subtitle: string;
   track: string;
   type: string;
-  language: string;
+  language: Language;
   abstract: string;
   description: string;
   recording_license: string;

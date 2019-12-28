@@ -6,7 +6,7 @@ import {
   SortDirection,
   SortDirectionType
 } from "react-virtualized";
-import { RootObject, Event, Schedule } from "../types";
+import { RootObject, Event, Schedule, Language } from "../types";
 import { DateTime } from "luxon";
 import lodash from "lodash";
 import {
@@ -20,91 +20,120 @@ import {
 
 import { CONFIG } from "../config";
 
-interface EventWithRoom extends Event {
+interface ExtendedEvent extends Event {
   room: string;
+  day: number;
 }
 
-const parseData = (schedule: Schedule, day: number): EventWithRoom[] => {
-  const rooms = schedule.conference.days[day].rooms;
-  const data = [];
-  for (const room in rooms) {
-    const events = rooms[room];
-    for (const eventName in events) {
-      const event = events[eventName];
-      data.push({ ...event, room });
+const parseData = (schedule: Schedule): ExtendedEvent[] => {
+  const data: ExtendedEvent[] = [];
+  for (const day in schedule.conference.days) {
+    const rooms = schedule.conference.days[day].rooms;
+    for (const room in rooms) {
+      const events = rooms[room];
+      for (const eventName in events) {
+        const event = events[eventName];
+        data.push({ ...event, room, day: parseInt(day, 10) });
+      }
     }
   }
   return data;
 };
 
-type Language = "en" | "de" | "";
+type AvailableFields = keyof Event;
+type Filters = {
+  day: number;
+  fields: AvailableFields[];
+  textFilter: string;
+  languages: {
+    [key in Language]: boolean;
+  };
+};
+
+type Sorting = {
+  sortBy: AvailableFields;
+  sortDirection: SortDirectionType;
+};
+
+const prepareData = (
+  filters: Filters,
+  sorting: Sorting,
+  data: ExtendedEvent[]
+) => {
+  const { day, languages, textFilter } = filters;
+  const { sortBy, sortDirection } = sorting;
+  let preparedData = data;
+  // Show only self organised
+  // let preparedData = data.filter(x => x.track === "self organized sessions");
+  preparedData = preparedData.filter(event => event.day === day);
+  preparedData = preparedData.filter(event => {
+    if (languages.en && event.language === "en") {
+      return true;
+    } else if (languages.de && event.language === "de") {
+      return true;
+    } else if (
+      languages.other &&
+      event.language !== "de" &&
+      event.language !== "en"
+    ) {
+      return true;
+    }
+  });
+  if (textFilter) {
+    const lowerF = textFilter.toLowerCase();
+    preparedData = preparedData.filter(
+      event =>
+        event.title.toLowerCase().includes(lowerF) ||
+        event.subtitle.toLowerCase().includes(lowerF) ||
+        event.room.toLowerCase().includes(lowerF)
+    );
+  }
+  preparedData = lodash.sortBy(preparedData, [sortBy]);
+  if (sortDirection === SortDirection.DESC) {
+    preparedData = preparedData.reverse();
+  }
+  return preparedData;
+};
 
 const EventsList = () => {
-  const [data, setData] = useState<RootObject>();
-  const [day, setDay] = useState<number>(0);
-  const [renderableData, setRenderableData] = useState<Event[]>([]);
-  const [sortBy, setSortBy] = useState<string>("date");
-  const [sortDirection, setSortDirection] = useState<SortDirectionType>(
-    SortDirection.ASC
-  );
-  const [filter, setFilter] = useState<string>("");
-  const [language, setLanguage] = useState({
-    english: true,
-    german: false,
-    other: false
-  });
-
-  const prepareData = (data: RootObject) => {
-    let preparedData = parseData(data.schedule, day);
-    // Show only self organised
-    preparedData = preparedData.filter(
-      x => x.track === "self organized sessions"
-    );
-    preparedData = preparedData.filter(event => {
-      if (language.english && event.language === "en") {
-        return true;
-      } else if (language.german && event.language === "de") {
-        return true;
-      } else if (
-        language.other &&
-        event.language !== "de" &&
-        event.language !== "en"
-      ) {
-        return true;
-      }
-    });
-    if (filter) {
-      const lowerF = filter.toLowerCase();
-      preparedData = preparedData.filter(
-        event =>
-          event.title.toLowerCase().includes(lowerF) ||
-          event.subtitle.toLowerCase().includes(lowerF) ||
-          event.room.toLowerCase().includes(lowerF)
-      );
-    }
-    preparedData = lodash.sortBy(preparedData, [sortBy]);
-    if (sortDirection === SortDirection.DESC) {
-      preparedData = preparedData.reverse();
-    }
-    setRenderableData(preparedData);
-  };
+  const [data, setData] = useState<ExtendedEvent[]>([]);
 
   useEffect(() => {
-    if (!data) {
+    if (data.length === 0) {
       fetch(`${CONFIG.domain}/${CONFIG.resource}`)
         .then(x => x.json())
         .then((x: RootObject) => {
-          setData(x);
-          prepareData(x);
+          const parsed = parseData(x.schedule);
+          setData(parsed);
         });
     }
   });
 
-  useEffect(() => {
-    if (data) {
-      prepareData(data);
-    }
-  }, [day, sortBy, sortDirection, filter, language]);
+  const [filters, setFilters] = useState<Filters>({
+    day: 0,
+    languages: {
+      en: true,
+      de: false,
+      other: false
+    },
+    fields: ["room", "title", "date"],
+    textFilter: ""
+  });
+
+  const { day, languages, fields, textFilter } = filters;
+
+  const updateFilters = (newFilters: Partial<Filters>) => {
+    setFilters({ ...filters, ...newFilters });
+  };
+
+  const [sorting, setSorting] = useState<Sorting>({
+    sortBy: "date",
+    sortDirection: SortDirection.ASC
+  });
+
+  const { sortBy, sortDirection } = sorting;
+
+  const renderableData = prepareData(filters, sorting, data);
 
   return (
     <>
@@ -114,11 +143,13 @@ const EventsList = () => {
           control={
             <Checkbox
               id="lang_en"
-              checked={language.english}
+              checked={languages.en}
               onChange={e => {
-                setLanguage({
-                  ...language,
-                  english: e.target.checked
+                updateFilters({
+                  languages: {
+                    ...languages,
+                    en: e.target.checked
+                  }
                 });
               }}
             />
@@ -129,11 +160,13 @@ const EventsList = () => {
           control={
             <Checkbox
               id="lang_de"
-              checked={language.german}
+              checked={languages.de}
               onChange={e => {
-                setLanguage({
-                  ...language,
-                  german: e.target.checked
+                updateFilters({
+                  languages: {
+                    ...languages,
+                    de: e.target.checked
+                  }
                 });
               }}
             />
@@ -145,11 +178,13 @@ const EventsList = () => {
           control={
             <Checkbox
               id="lang_other"
-              checked={language.other}
+              checked={languages.other}
               onChange={e => {
-                setLanguage({
-                  ...language,
-                  other: e.target.checked
+                updateFilters({
+                  languages: {
+                    ...languages,
+                    other: e.target.checked
+                  }
                 });
               }}
             />
@@ -162,9 +197,11 @@ const EventsList = () => {
           }}
           aria-label="Chosen day"
           name="day"
-          value={day}
+          value={filters.day}
           onChange={e => {
-            setDay(parseInt(e.target.value, 10));
+            updateFilters({
+              day: parseInt(e.target.value, 10)
+            });
           }}
         >
           {["day1", "day2", "day3", "day4"].map((x, y) => {
@@ -184,7 +221,9 @@ const EventsList = () => {
           label="Filter"
           variant="outlined"
           onChange={e => {
-            setFilter(e.target.value);
+            updateFilters({
+              textFilter: e.target.value
+            });
           }}
         />
       </FormGroup>
@@ -214,16 +253,13 @@ const EventsList = () => {
               sortBy={sortBy}
               sortDirection={sortDirection}
               sort={({ sortBy, sortDirection }) => {
-                setSortBy(sortBy);
-                setSortDirection(sortDirection);
+                setSorting({
+                  sortBy: sortBy as AvailableFields,
+                  sortDirection
+                });
               }}
             >
-              <Column
-                dataKey="room"
-                label="Room"
-                width={50}
-                flexGrow={globalThis && globalThis.outerWidth >= 512 ? 1 : 0}
-              />
+              <Column dataKey="room" label="Room" width={50} flexGrow={1} />
 
               <Column dataKey="title" label="Title" width={100} flexGrow={1} />
               {globalThis && globalThis.outerWidth >= 1024 && (
