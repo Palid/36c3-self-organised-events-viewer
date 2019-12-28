@@ -91,7 +91,7 @@ const EventsList = () => {
 
   useEffect(() => {
     if (!data) {
-      fetch(`${CONFIG.domain}/schedule`)
+      fetch(`${CONFIG.domain}/${CONFIG.resource}`)
         .then(x => x.json())
         .then((x: RootObject) => {
           setData(x);
