@@ -15,7 +15,12 @@ import {
   Checkbox,
   TextField,
   FormGroup,
-  RadioGroup
+  RadioGroup,
+  Select,
+  Input,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from "@material-ui/core";
 
 import { CONFIG } from "../config";
@@ -40,10 +45,33 @@ const parseData = (schedule: Schedule): ExtendedEvent[] => {
   return data;
 };
 
-type AvailableFields = keyof Event;
+type TAvailableFields = keyof Event;
+const AvailableFields: TAvailableFields[] = [
+  // "id",
+  // "guid",
+  // "logo",
+  // "slug",
+  // "recording_license",
+  // "do_not_record",
+  // "links",
+  // "attachments"
+  // "abstract",
+  // "language",
+  // "url",
+  // "persons"
+  "title",
+  "track",
+  "date",
+  "type",
+  "start",
+  "duration",
+  "room",
+  "subtitle",
+  "description"
+];
 type Filters = {
   day: number;
-  fields: AvailableFields[];
+  fields: TAvailableFields[];
   textFilter: string;
   languages: {
     [key in Language]: boolean;
@@ -51,7 +79,7 @@ type Filters = {
 };
 
 type Sorting = {
-  sortBy: AvailableFields;
+  sortBy: TAvailableFields;
   sortDirection: SortDirectionType;
 };
 
@@ -60,7 +88,7 @@ const prepareData = (
   sorting: Sorting,
   data: ExtendedEvent[]
 ) => {
-  const { day, languages, textFilter } = filters;
+  const { day, languages, textFilter, fields } = filters;
   const { sortBy, sortDirection } = sorting;
   let preparedData = data;
   // Show only self organised
@@ -81,18 +109,36 @@ const prepareData = (
   });
   if (textFilter) {
     const lowerF = textFilter.toLowerCase();
-    preparedData = preparedData.filter(
-      event =>
-        event.title.toLowerCase().includes(lowerF) ||
-        event.subtitle.toLowerCase().includes(lowerF) ||
-        event.room.toLowerCase().includes(lowerF)
-    );
+    preparedData = preparedData.filter(event => {
+      for (const field of fields) {
+        const z = event[field];
+        if (typeof z === "string" && z.toLowerCase().includes(lowerF)) {
+          return true;
+        }
+      }
+    });
   }
   preparedData = lodash.sortBy(preparedData, [sortBy]);
   if (sortDirection === SortDirection.DESC) {
     preparedData = preparedData.reverse();
   }
   return preparedData;
+};
+
+const cellRenderer = (cell: {
+  cellData: any;
+  columnData: any;
+  columnIndex: number;
+  dataKey: string;
+  isScrolling: boolean;
+  rowData: any;
+  rowIndex: number;
+}) => {
+  if (cell.dataKey === "date") {
+    const l = DateTime.fromISO(cell.cellData);
+    return l.toFormat("dd, HH:mm");
+  }
+  return cell.cellData;
 };
 
 const EventsList = () => {
@@ -120,7 +166,7 @@ const EventsList = () => {
     textFilter: ""
   });
 
-  const { day, languages, fields, textFilter } = filters;
+  const { languages, fields } = filters;
 
   const updateFilters = (newFilters: Partial<Filters>) => {
     setFilters({ ...filters, ...newFilters });
@@ -218,7 +264,7 @@ const EventsList = () => {
         </RadioGroup>
         <TextField
           id="filter"
-          label="Filter"
+          label="Filter in visible fields"
           variant="outlined"
           onChange={e => {
             updateFilters({
@@ -226,6 +272,26 @@ const EventsList = () => {
             });
           }}
         />
+        <FormControl>
+          <InputLabel id="demo-mutiple-name-label">Fields</InputLabel>
+          <Select
+            multiple={true}
+            value={filters.fields}
+            input={<Input />}
+            onChange={e => {
+              const value = e.target.value as TAvailableFields[];
+              updateFilters({
+                fields: value
+              });
+            }}
+          >
+            {AvailableFields.map(x => (
+              <MenuItem value={x} key={x}>
+                {lodash.capitalize(x)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </FormGroup>
       <div
         style={{
@@ -254,14 +320,24 @@ const EventsList = () => {
               sortDirection={sortDirection}
               sort={({ sortBy, sortDirection }) => {
                 setSorting({
-                  sortBy: sortBy as AvailableFields,
+                  sortBy: sortBy as TAvailableFields,
                   sortDirection
                 });
               }}
             >
-              <Column dataKey="room" label="Room" width={50} flexGrow={1} />
+              {filters.fields.map(field => (
+                <Column
+                  key="field"
+                  dataKey={field}
+                  label={lodash.capitalize(field)}
+                  width={50}
+                  flexGrow={1}
+                  cellRenderer={cellRenderer}
+                />
+              ))}
+              {/* <Column dataKey="room" label="Room" width={50} flexGrow={1} /> */}
 
-              <Column dataKey="title" label="Title" width={100} flexGrow={1} />
+              {/* <Column dataKey="title" label="Title" width={100} flexGrow={1} />
               {globalThis && globalThis.outerWidth >= 1024 && (
                 <Column dataKey="subtitle" label="Subtitle" width={200} />
               )}
@@ -273,7 +349,7 @@ const EventsList = () => {
                   const l = DateTime.fromISO(cellData);
                   return l.toFormat("dd, HH:mm");
                 }}
-              />
+              /> */}
             </Table>
           )}
         </AutoSizer>
