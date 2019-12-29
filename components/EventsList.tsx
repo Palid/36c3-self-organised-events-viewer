@@ -100,6 +100,10 @@ const cellRenderer = (cell: {
   return cell.cellData;
 };
 
+const currentDay = DateTime.local().toFormat("dd");
+const daysToDates = ["27", "28", "29", "30"];
+const foundDay = daysToDates.findIndex(x => x === currentDay);
+
 const EventsList = () => {
   const [data, setData] = useState<ExtendedEvent[]>([]);
 
@@ -115,7 +119,7 @@ const EventsList = () => {
   });
 
   const [filters, setFilters] = useState<Filters>({
-    day: 0,
+    day: foundDay || daysToDates.length - 1,
     languages: {
       en: true,
       de: false,
