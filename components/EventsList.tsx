@@ -168,21 +168,6 @@ const EventsList = () => {
                     cellRenderer={cellRenderer}
                   />
                 ))}
-                {/* <Column dataKey="room" label="Room" width={50} flexGrow={1} /> */}
-
-                {/* <Column dataKey="title" label="Title" width={100} flexGrow={1} />
-              {globalThis && globalThis.outerWidth >= 1024 && (
-                <Column dataKey="subtitle" label="Subtitle" width={200} />
-              )}
-              <Column
-                dataKey="date"
-                width={70}
-                label="Date"
-                cellRenderer={({ cellData }) => {
-                  const l = DateTime.fromISO(cellData);
-                  return l.toFormat("dd, HH:mm");
-                }}
-              /> */}
               </Table>
             )}
           </AutoSizer>

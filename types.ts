@@ -98,11 +98,11 @@ export const AvailableFields: TAvailableFields[] = [
   // "language",
   // "url",
   // "persons"
+  // "start",
+  // "track",
   "title",
-  "track",
   "date",
   "type",
-  "start",
   "duration",
   "room",
   "subtitle",
