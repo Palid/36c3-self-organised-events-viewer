@@ -1,5 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Column, Table, AutoSizer, SortDirection } from "react-virtualized";
+import React, { useState, useEffect } from "react";
+import {
+  Column,
+  Table,
+  AutoSizer,
+  SortDirection,
+  defaultTableRowRenderer
+} from "react-virtualized";
 import {
   RootObject,
   Event,
@@ -11,7 +17,7 @@ import {
 import { DateTime } from "luxon";
 import capitalize from "lodash/capitalize";
 import sortByFun from "lodash/sortBy";
-import { Paper } from "@material-ui/core";
+import { Paper, Link } from "@material-ui/core";
 import { ListFilters } from "./Filters";
 
 import { CONFIG } from "../config";
@@ -146,8 +152,16 @@ const EventsList = () => {
                 headerHeight={56}
                 rowGetter={({ index }) => renderableData[index]}
                 rowCount={renderableData.length}
-                onRowClick={({ rowData }) => {
-                  window.open(rowData.url, "_blank");
+                rowRenderer={props => {
+                  return (
+                    <Link
+                      href={props.rowData.url}
+                      target="__blank"
+                      color="inherit"
+                    >
+                      {defaultTableRowRenderer(props)}
+                    </Link>
+                  );
                 }}
                 sortBy={sortBy}
                 sortDirection={sortDirection}
