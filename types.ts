@@ -1,3 +1,5 @@
+import { SortDirectionType } from "react-virtualized";
+
 export interface RootObject {
   schedule: Schedule;
 }
@@ -65,3 +67,44 @@ export interface Person {
   id: number;
   public_name: string;
 }
+
+// In-app types
+export type TAvailableFields = keyof Event;
+
+export type Filters = {
+  day: number;
+  fields: TAvailableFields[];
+  textFilter: string;
+  languages: {
+    [key in Language]: boolean;
+  };
+};
+
+export type Sorting = {
+  sortBy: TAvailableFields;
+  sortDirection: SortDirectionType;
+};
+
+export const AvailableFields: TAvailableFields[] = [
+  // "id",
+  // "guid",
+  // "logo",
+  // "slug",
+  // "recording_license",
+  // "do_not_record",
+  // "links",
+  // "attachments"
+  // "abstract",
+  // "language",
+  // "url",
+  // "persons"
+  "title",
+  "track",
+  "date",
+  "type",
+  "start",
+  "duration",
+  "room",
+  "subtitle",
+  "description"
+];

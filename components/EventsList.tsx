@@ -1,27 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Column, Table, AutoSizer, SortDirection } from "react-virtualized";
 import {
-  Column,
-  Table,
-  AutoSizer,
-  SortDirection,
-  SortDirectionType
-} from "react-virtualized";
-import { RootObject, Event, Schedule, Language } from "../types";
+  RootObject,
+  Event,
+  Schedule,
+  TAvailableFields,
+  Filters,
+  Sorting
+} from "../types";
 import { DateTime } from "luxon";
-import lodash from "lodash";
-import {
-  FormControlLabel,
-  Radio,
-  Checkbox,
-  TextField,
-  FormGroup,
-  RadioGroup,
-  Select,
-  Input,
-  MenuItem,
-  FormControl,
-  InputLabel
-} from "@material-ui/core";
+import capitalize from "lodash/capitalize";
+import sortByFun from "lodash/sortBy";
+import { Paper } from "@material-ui/core";
+import { ListFilters } from "./Filters";
 
 import { CONFIG } from "../config";
 
@@ -43,44 +34,6 @@ const parseData = (schedule: Schedule): ExtendedEvent[] => {
     }
   }
   return data;
-};
-
-type TAvailableFields = keyof Event;
-const AvailableFields: TAvailableFields[] = [
-  // "id",
-  // "guid",
-  // "logo",
-  // "slug",
-  // "recording_license",
-  // "do_not_record",
-  // "links",
-  // "attachments"
-  // "abstract",
-  // "language",
-  // "url",
-  // "persons"
-  "title",
-  "track",
-  "date",
-  "type",
-  "start",
-  "duration",
-  "room",
-  "subtitle",
-  "description"
-];
-type Filters = {
-  day: number;
-  fields: TAvailableFields[];
-  textFilter: string;
-  languages: {
-    [key in Language]: boolean;
-  };
-};
-
-type Sorting = {
-  sortBy: TAvailableFields;
-  sortDirection: SortDirectionType;
 };
 
 const prepareData = (
@@ -118,7 +71,7 @@ const prepareData = (
       }
     });
   }
-  preparedData = lodash.sortBy(preparedData, [sortBy]);
+  preparedData = sortByFun(preparedData, [sortBy]);
   if (sortDirection === SortDirection.DESC) {
     preparedData = preparedData.reverse();
   }
@@ -166,8 +119,6 @@ const EventsList = () => {
     textFilter: ""
   });
 
-  const { languages, fields } = filters;
-
   const updateFilters = (newFilters: Partial<Filters>) => {
     setFilters({ ...filters, ...newFilters });
   };
@@ -183,161 +134,43 @@ const EventsList = () => {
 
   return (
     <>
-      <FormGroup row style={{ display: "flex", flex: 1, paddingTop: 24 }}>
-        <FormControlLabel
-          label="English"
-          control={
-            <Checkbox
-              id="lang_en"
-              checked={languages.en}
-              onChange={e => {
-                updateFilters({
-                  languages: {
-                    ...languages,
-                    en: e.target.checked
-                  }
-                });
-              }}
-            />
-          }
-        />
-        <FormControlLabel
-          label="German"
-          control={
-            <Checkbox
-              id="lang_de"
-              checked={languages.de}
-              onChange={e => {
-                updateFilters({
-                  languages: {
-                    ...languages,
-                    de: e.target.checked
-                  }
-                });
-              }}
-            />
-          }
-        />
+      <ListFilters filters={filters} updateFilters={updateFilters} />
+      <div className="TableContainer">
+        <Paper elevation={3} style={{ flex: 1 }}>
+          <AutoSizer>
+            {({ width, height }) => (
+              <Table
+                width={width}
+                height={height}
+                rowHeight={52}
+                headerHeight={56}
+                rowGetter={({ index }) => renderableData[index]}
+                rowCount={renderableData.length}
+                onRowClick={({ rowData }) => {
+                  window.open(rowData.url, "_blank");
+                }}
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                sort={({ sortBy, sortDirection }) => {
+                  setSorting({
+                    sortBy: sortBy as TAvailableFields,
+                    sortDirection
+                  });
+                }}
+              >
+                {filters.fields.map(field => (
+                  <Column
+                    key="field"
+                    dataKey={field}
+                    label={capitalize(field)}
+                    width={50}
+                    flexGrow={1}
+                    cellRenderer={cellRenderer}
+                  />
+                ))}
+                {/* <Column dataKey="room" label="Room" width={50} flexGrow={1} /> */}
 
-        <FormControlLabel
-          label="Other"
-          control={
-            <Checkbox
-              id="lang_other"
-              checked={languages.other}
-              onChange={e => {
-                updateFilters({
-                  languages: {
-                    ...languages,
-                    other: e.target.checked
-                  }
-                });
-              }}
-            />
-          }
-        />
-
-        <RadioGroup
-          style={{
-            flexDirection: "row"
-          }}
-          aria-label="Chosen day"
-          name="day"
-          value={filters.day}
-          onChange={e => {
-            updateFilters({
-              day: parseInt(e.target.value, 10)
-            });
-          }}
-        >
-          {["day1", "day2", "day3", "day4"].map((x, y) => {
-            const k = `Day ${y + 1}`;
-            return (
-              <FormControlLabel
-                key={k}
-                label={k}
-                value={y}
-                control={<Radio />}
-              />
-            );
-          })}
-        </RadioGroup>
-        <TextField
-          id="filter"
-          label="Filter in visible fields"
-          variant="outlined"
-          onChange={e => {
-            updateFilters({
-              textFilter: e.target.value
-            });
-          }}
-        />
-        <FormControl>
-          <InputLabel id="demo-mutiple-name-label">Fields</InputLabel>
-          <Select
-            multiple={true}
-            value={filters.fields}
-            input={<Input />}
-            onChange={e => {
-              const value = e.target.value as TAvailableFields[];
-              updateFilters({
-                fields: value
-              });
-            }}
-          >
-            {AvailableFields.map(x => (
-              <MenuItem value={x} key={x}>
-                {lodash.capitalize(x)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </FormGroup>
-      <div
-        style={{
-          minHeight:
-            globalThis && globalThis.outerWidth < 920
-              ? "calc(100vh - 188px)"
-              : "calc(100vh - 48px - 56px)",
-          display: "flex",
-          flex: 1,
-          paddingBottom: 24
-        }}
-      >
-        <AutoSizer>
-          {({ width, height }) => (
-            <Table
-              width={width}
-              height={height}
-              rowHeight={52}
-              headerHeight={56}
-              rowGetter={({ index }) => renderableData[index]}
-              rowCount={renderableData.length}
-              onRowClick={({ rowData }) => {
-                window.open(rowData.url, "_blank");
-              }}
-              sortBy={sortBy}
-              sortDirection={sortDirection}
-              sort={({ sortBy, sortDirection }) => {
-                setSorting({
-                  sortBy: sortBy as TAvailableFields,
-                  sortDirection
-                });
-              }}
-            >
-              {filters.fields.map(field => (
-                <Column
-                  key="field"
-                  dataKey={field}
-                  label={lodash.capitalize(field)}
-                  width={50}
-                  flexGrow={1}
-                  cellRenderer={cellRenderer}
-                />
-              ))}
-              {/* <Column dataKey="room" label="Room" width={50} flexGrow={1} /> */}
-
-              {/* <Column dataKey="title" label="Title" width={100} flexGrow={1} />
+                {/* <Column dataKey="title" label="Title" width={100} flexGrow={1} />
               {globalThis && globalThis.outerWidth >= 1024 && (
                 <Column dataKey="subtitle" label="Subtitle" width={200} />
               )}
@@ -350,9 +183,20 @@ const EventsList = () => {
                   return l.toFormat("dd, HH:mm");
                 }}
               /> */}
-            </Table>
-          )}
-        </AutoSizer>
+              </Table>
+            )}
+          </AutoSizer>
+        </Paper>
+        <style jsx>
+          {`
+            .TableContainer {
+              display: flex;
+              flex: 1;
+              margin: 8px 0;
+              min-height: calc(100vh - 72px - 24px);
+            }
+          `}
+        </style>
         <style jsx global>
           {`
             .ReactVirtualized__Table {
