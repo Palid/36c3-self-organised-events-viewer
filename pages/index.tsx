@@ -25,6 +25,10 @@ const Home = () => {
           rel="stylesheet"
           href="https://fonts.googleapis.com/icon?family=Material+Icons"
         />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+        />
       </Head>
       <div style={{ backgroundColor: "#e5e5e5" }}>
         <Container style={{ backgroundColor: "#fff" }}>
