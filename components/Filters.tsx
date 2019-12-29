@@ -50,7 +50,7 @@ export const ListFilters = ({
           </IconButton>
         }
       />
-      <Collapse in={true} timeout="auto" unmountOnExit>
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
         <CardContent>
           <style jsx global>
             {`
