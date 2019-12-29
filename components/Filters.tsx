@@ -38,11 +38,7 @@ export const ListFilters = ({
 
   const { languages, fields } = filters;
   return (
-    <Card
-      style={{
-        marginTop: 8
-      }}
-    >
+    <Card>
       <CardHeader
         title="Filters"
         action={

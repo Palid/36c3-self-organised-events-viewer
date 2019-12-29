@@ -30,8 +30,8 @@ const Home = () => {
           href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
         />
       </Head>
-      <div style={{ backgroundColor: "#e5e5e5" }}>
-        <Container style={{ backgroundColor: "#fff" }}>
+      <div>
+        <Container style={{ paddingTop: 8, maxWidth: "100%" }}>
           <EventsList />
         </Container>
       </div>
