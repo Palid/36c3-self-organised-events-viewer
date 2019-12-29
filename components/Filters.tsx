@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { Filters, TAvailableFields, AvailableFields } from "../types";
 import {
   FormControlLabel,
@@ -29,6 +29,13 @@ export const ListFilters = ({
   updateFilters: (newFilters: Partial<Filters>) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
+
+  useLayoutEffect(() => {
+    if (window && window.innerWidth && window.innerWidth >= 1024) {
+      setExpanded(true);
+    }
+  }, []);
+
   const { languages, fields } = filters;
   return (
     <Card
