@@ -180,6 +180,11 @@ const EventsList = () => {
               margin: 8px 0;
               min-height: calc(100vh - 72px - 24px);
             }
+            @supports (-webkit-appearance: none) {
+              .TableContainer {
+                max-height: calc(100vh - 72px - 56px);
+              }
+            }
           `}
         </style>
         <style jsx global>
