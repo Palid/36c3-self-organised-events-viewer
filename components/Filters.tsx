@@ -28,13 +28,28 @@ export const ListFilters = ({
   filters: Filters;
   updateFilters: (newFilters: Partial<Filters>) => void;
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState<boolean | undefined>(undefined);
 
   useLayoutEffect(() => {
     if (window && window.innerWidth && window.innerWidth >= 1024) {
-      setExpanded(true);
+      if (typeof expanded === "undefined") {
+        setExpanded(true);
+      }
+      setTimeout(() => {
+        if (expanded) {
+          (window as any).scrollTo({
+            top: window.innerHeight,
+            behavior: "smooth"
+          });
+        } else {
+          (window as any).scrollTo({
+            top: 0,
+            behavior: "smooth"
+          });
+        }
+      }, 350);
     }
-  }, []);
+  }, [expanded]);
 
   const { languages, fields } = filters;
   return (
@@ -44,7 +59,8 @@ export const ListFilters = ({
         action={
           <IconButton
             onClick={() => {
-              setExpanded(!expanded);
+              const newValue = !expanded;
+              setExpanded(newValue);
             }}
             aria-expanded={expanded}
             aria-label="show more"
@@ -53,10 +69,13 @@ export const ListFilters = ({
           </IconButton>
         }
       />
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
+      <Collapse in={expanded} timeout={300} unmountOnExit>
         <CardContent>
           <style jsx global>
             {`
+              .MuiCardHeader-root {
+                padding: 0 16px;
+              }
               .MuiFormControl-root {
                 margin: 0 4px;
               }
@@ -67,7 +86,6 @@ export const ListFilters = ({
             style={{
               display: "flex",
               flex: 1,
-              marginTop: -20,
               justifyContent: "space-between"
             }}
             className="FiltersForm"

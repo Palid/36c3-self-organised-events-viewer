@@ -218,6 +218,7 @@ const EventsList = () => {
               display: flex;
               align-items: center;
               flex-direction: row;
+              padding-right: 0 !important;
               border-bottom: 1px solid rgba(60, 60, 70, 0.12);
             }
             .ReactVirtualized__Table__rowColumn {
