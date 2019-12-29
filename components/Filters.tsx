@@ -56,8 +56,6 @@ export const ListFilters = ({
             {`
               .MuiFormControl-root {
                 margin: 0 4px;
-                // display: block;
-                // min-width: 100%;
               }
             `}
           </style>
@@ -67,7 +65,7 @@ export const ListFilters = ({
               display: "flex",
               flex: 1,
               marginTop: -20,
-              alignItems: "space-between"
+              justifyContent: "space-between"
             }}
             className="FiltersForm"
           >
