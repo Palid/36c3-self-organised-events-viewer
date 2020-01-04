@@ -100,9 +100,23 @@ const cellRenderer = (cell: {
   return cell.cellData;
 };
 
-const currentDay = DateTime.local().toFormat("dd");
-const daysToDates = ["27", "28", "29", "30"];
-const foundDay = daysToDates.findIndex(x => x === currentDay);
+const foundDay = (function getChosenDay() {
+  const date = new Date();
+  const currentDay = date.getDate();
+  const currentMonth = date.getMonth() + 1;
+
+  if (currentMonth === 12) {
+    const daysToDates = [27, 28, 29, 30];
+    const found = daysToDates.findIndex(x => x === currentDay);
+    if (found !== -1) {
+      return found;
+    } else {
+      return 0;
+    }
+  } else {
+    return 0;
+  }
+})();
 
 const EventsList = () => {
   const [data, setData] = useState<ExtendedEvent[]>([]);
@@ -119,7 +133,7 @@ const EventsList = () => {
   });
 
   const [filters, setFilters] = useState<Filters>({
-    day: foundDay || daysToDates.length - 1,
+    day: foundDay || 0,
     languages: {
       en: true,
       de: false,
