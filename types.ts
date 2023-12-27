@@ -58,6 +58,11 @@ export interface Event {
   attachments: Link[][];
 }
 
+export interface ExtendedEvent extends Event {
+  room: string;
+  day: number;
+}
+
 export interface Link {
   url: string;
   title: string;
@@ -106,5 +111,5 @@ export const AvailableFields: TAvailableFields[] = [
   "duration",
   "room",
   "subtitle",
-  "description"
+  "description",
 ];

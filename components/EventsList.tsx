@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import React, { useState } from "react";
 import {
   Column,
   Table,
   AutoSizer,
   SortDirection,
-  defaultTableRowRenderer
+  defaultTableRowRenderer,
 } from "react-virtualized";
 import {
   RootObject,
@@ -12,35 +14,16 @@ import {
   Schedule,
   TAvailableFields,
   Filters,
-  Sorting
+  Sorting,
+  ExtendedEvent,
 } from "../types";
 import { DateTime } from "luxon";
 import capitalize from "lodash/capitalize";
 import sortByFun from "lodash/sortBy";
-import { Paper, Link } from "@material-ui/core";
 import { ListFilters } from "./Filters";
 
-import { CONFIG } from "../config";
-
-interface ExtendedEvent extends Event {
-  room: string;
-  day: number;
-}
-
-const parseData = (schedule: Schedule): ExtendedEvent[] => {
-  const data: ExtendedEvent[] = [];
-  for (const day in schedule.conference.days) {
-    const rooms = schedule.conference.days[day].rooms;
-    for (const room in rooms) {
-      const events = rooms[room];
-      for (const eventName in events) {
-        const event = events[eventName];
-        data.push({ ...event, room, day: parseInt(day, 10) });
-      }
-    }
-  }
-  return data;
-};
+import { Paper } from "@mui/material";
+import Link from "next/link";
 
 const prepareData = (
   filters: Filters,
@@ -52,8 +35,8 @@ const prepareData = (
   let preparedData = data;
   // Show only self organised
   // let preparedData = data.filter(x => x.track === "self organized sessions");
-  preparedData = preparedData.filter(event => event.day === day);
-  preparedData = preparedData.filter(event => {
+  preparedData = preparedData.filter((event) => event.day === day);
+  preparedData = preparedData.filter((event) => {
     if (languages.en && event.language === "en") {
       return true;
     } else if (languages.de && event.language === "de") {
@@ -68,7 +51,7 @@ const prepareData = (
   });
   if (textFilter) {
     const lowerF = textFilter.toLowerCase();
-    preparedData = preparedData.filter(event => {
+    preparedData = preparedData.filter((event) => {
       for (const field of fields) {
         const z = event[field];
         if (typeof z === "string" && z.toLowerCase().includes(lowerF)) {
@@ -107,7 +90,7 @@ const foundDay = (function getChosenDay() {
 
   if (currentMonth === 12) {
     const daysToDates = [27, 28, 29, 30];
-    const found = daysToDates.findIndex(x => x === currentDay);
+    const found = daysToDates.findIndex((x) => x === currentDay);
     if (found !== -1) {
       return found;
     } else {
@@ -118,29 +101,16 @@ const foundDay = (function getChosenDay() {
   }
 })();
 
-const EventsList = () => {
-  const [data, setData] = useState<ExtendedEvent[]>([]);
-
-  useEffect(() => {
-    if (data.length === 0) {
-      fetch(`${CONFIG.domain}/${CONFIG.resource}`)
-        .then(x => x.json())
-        .then((x: RootObject) => {
-          const parsed = parseData(x.schedule);
-          setData(parsed);
-        });
-    }
-  });
-
+const EventsList = ({ events }: { events: ExtendedEvent[] }) => {
   const [filters, setFilters] = useState<Filters>({
     day: foundDay || 0,
     languages: {
       en: true,
       de: false,
-      other: false
+      other: false,
     },
     fields: ["room", "title", "date"],
-    textFilter: ""
+    textFilter: "",
   });
 
   const updateFilters = (newFilters: Partial<Filters>) => {
@@ -149,12 +119,12 @@ const EventsList = () => {
 
   const [sorting, setSorting] = useState<Sorting>({
     sortBy: "date",
-    sortDirection: SortDirection.ASC
+    sortDirection: SortDirection.ASC,
   });
 
   const { sortBy, sortDirection } = sorting;
 
-  const renderableData = prepareData(filters, sorting, data);
+  const renderableData = prepareData(filters, sorting, events);
 
   return (
     <>
@@ -170,7 +140,7 @@ const EventsList = () => {
                 headerHeight={56}
                 rowGetter={({ index }) => renderableData[index]}
                 rowCount={renderableData.length}
-                rowRenderer={props => {
+                rowRenderer={(props) => {
                   return (
                     <Link
                       href={props.rowData.url}
@@ -186,11 +156,11 @@ const EventsList = () => {
                 sort={({ sortBy, sortDirection }) => {
                   setSorting({
                     sortBy: sortBy as TAvailableFields,
-                    sortDirection
+                    sortDirection,
                   });
                 }}
               >
-                {filters.fields.map(field => (
+                {filters.fields.map((field) => (
                   <Column
                     key="field"
                     dataKey={field}

@@ -11,22 +11,30 @@
     "json-server": "json-server db.json -p 3001"
   },
   "dependencies": {
-    "@material-ui/core": "^4.8.1",
-    "@material-ui/icons": "^4.5.1",
-    "@types/material-ui": "^0.21.7",
-    "lodash": "^4.17.15",
-    "luxon": "^1.21.3",
-    "next": "9.1.6",
-    "react": "16.12.0",
-    "react-dom": "16.12.0",
-    "react-virtualized": "^9.21.2"
+    "@emotion/cache": "^11.11.0",
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@fontsource/material-icons": "^5.0.11",
+    "@fontsource/roboto": "^5.0.8",
+    "@mui/icons-material": "^5.15.2",
+    "@mui/lab": "^5.0.0-alpha.158",
+    "@mui/material": "^5.15.2",
+    "@mui/material-nextjs": "^5.15.0",
+    "lodash": "^4.17.21",
+    "luxon": "^3.4.4",
+    "next": "^14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-virtualized": "^9.22.5"
   },
   "devDependencies": {
-    "@types/luxon": "^1.21.0",
-    "@types/node": "^13.1.1",
-    "@types/react": "^16.9.17",
-    "@types/react-virtualized": "^9.21.7",
-    "json-server": "^0.15.1",
-    "typescript": "^3.7.4"
+    "@types/lodash": "^4.14.202",
+    "@types/luxon": "^3.3.7",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-virtualized": "^9.21.29",
+    "eslint-config-next": "^14.0.4",
+    "json-server": "^0.17.4",
+    "typescript": "^5.3.3"
   }
 }

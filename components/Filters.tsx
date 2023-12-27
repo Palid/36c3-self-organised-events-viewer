@@ -1,29 +1,31 @@
 import React, { useState, useLayoutEffect } from "react";
 import { Filters, TAvailableFields, AvailableFields } from "../types";
+
+import capitalize from "lodash/capitalize";
 import {
-  FormControlLabel,
-  Radio,
-  Checkbox,
-  TextField,
+  Card,
+  CardHeader,
+  IconButton,
+  Collapse,
+  CardContent,
   FormGroup,
+  FormControl,
+  FormControlLabel,
+  Checkbox,
   RadioGroup,
+  Radio,
+  TextField,
+  InputLabel,
   Select,
   Input,
   MenuItem,
-  FormControl,
-  InputLabel,
-  Card,
-  CardHeader,
-  CardContent,
-  Collapse,
-  IconButton
-} from "@material-ui/core";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import capitalize from "lodash/capitalize";
+} from "@mui/material";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import ExpandLess from "@mui/icons-material/ExpandLess";
 
 export const ListFilters = ({
   filters,
-  updateFilters
+  updateFilters,
 }: {
   filters: Filters;
   updateFilters: (newFilters: Partial<Filters>) => void;
@@ -35,19 +37,6 @@ export const ListFilters = ({
       if (typeof expanded === "undefined") {
         setExpanded(true);
       }
-      setTimeout(() => {
-        if (expanded) {
-          (window as any).scrollTo({
-            top: window.innerHeight,
-            behavior: "smooth"
-          });
-        } else {
-          (window as any).scrollTo({
-            top: 0,
-            behavior: "smooth"
-          });
-        }
-      }, 350);
     }
   }, [expanded]);
 
@@ -65,11 +54,11 @@ export const ListFilters = ({
             aria-expanded={expanded}
             aria-label="show more"
           >
-            <ExpandMoreIcon />
+            {expanded ? <ExpandLess /> : <ExpandMore />}
           </IconButton>
         }
       />
-      <Collapse in={expanded} timeout={300} unmountOnExit>
+      <Collapse in={expanded} timeout={300}>
         <CardContent>
           <style jsx global>
             {`
@@ -86,13 +75,13 @@ export const ListFilters = ({
             style={{
               display: "flex",
               flex: 1,
-              justifyContent: "space-between"
+              justifyContent: "space-between",
             }}
             className="FiltersForm"
           >
             <FormControl
               style={{
-                flexDirection: "row"
+                flexDirection: "row",
               }}
             >
               <FormControlLabel
@@ -101,12 +90,12 @@ export const ListFilters = ({
                   <Checkbox
                     id="lang_en"
                     checked={languages.en}
-                    onChange={e => {
+                    onChange={(e) => {
                       updateFilters({
                         languages: {
                           ...languages,
-                          en: e.target.checked
-                        }
+                          en: e.target.checked,
+                        },
                       });
                     }}
                   />
@@ -118,12 +107,12 @@ export const ListFilters = ({
                   <Checkbox
                     id="lang_de"
                     checked={languages.de}
-                    onChange={e => {
+                    onChange={(e) => {
                       updateFilters({
                         languages: {
                           ...languages,
-                          de: e.target.checked
-                        }
+                          de: e.target.checked,
+                        },
                       });
                     }}
                   />
@@ -136,12 +125,12 @@ export const ListFilters = ({
                   <Checkbox
                     id="lang_other"
                     checked={languages.other}
-                    onChange={e => {
+                    onChange={(e) => {
                       updateFilters({
                         languages: {
                           ...languages,
-                          other: e.target.checked
-                        }
+                          other: e.target.checked,
+                        },
                       });
                     }}
                   />
@@ -151,14 +140,14 @@ export const ListFilters = ({
 
             <RadioGroup
               style={{
-                flexDirection: "row"
+                flexDirection: "row",
               }}
               aria-label="Chosen day"
               name="day"
               value={filters.day}
-              onChange={e => {
+              onChange={(e) => {
                 updateFilters({
-                  day: parseInt(e.target.value, 10)
+                  day: parseInt(e.target.value, 10),
                 });
               }}
             >
@@ -178,9 +167,9 @@ export const ListFilters = ({
               id="filter"
               label="Filter in visible fields"
               variant="outlined"
-              onChange={e => {
+              onChange={(e) => {
                 updateFilters({
-                  textFilter: e.target.value
+                  textFilter: e.target.value,
                 });
               }}
             />
@@ -190,14 +179,14 @@ export const ListFilters = ({
                 multiple={true}
                 value={filters.fields}
                 input={<Input />}
-                onChange={e => {
+                onChange={(e) => {
                   const value = e.target.value as TAvailableFields[];
                   updateFilters({
-                    fields: value
+                    fields: value,
                   });
                 }}
               >
-                {AvailableFields.map(x => (
+                {AvailableFields.map((x) => (
                   <MenuItem value={x} key={x}>
                     {capitalize(x)}
                   </MenuItem>
