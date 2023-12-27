@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "export": "next export",
     "prepare": "rm -fr out && npm run build && npx next export",
     "json-server": "json-server db.json -p 3001"
   },
