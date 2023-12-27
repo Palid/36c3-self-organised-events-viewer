@@ -11,7 +11,11 @@ async function fetchData() {
     const json = readFileSync(resolve(__dirname, "../", "db.json"), "utf-8");
     return JSON.parse(json);
   }
-  const data = await fetch(process.env.SCHEDULE_URI)
+  const data = await fetch(process.env.SCHEDULE_URI, {
+    next: {
+      revalidate: 1000 * 5 * 60, // 5minutes
+    },
+  })
     .then((x) => x.json())
     .then((data: RootObject) => parseData(data.schedule));
   return data;
