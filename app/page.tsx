@@ -1,4 +1,3 @@
-"use server";
 import { Container } from "@mui/material";
 import EventsList from "../components/EventsList";
 import { ExtendedEvent, RootObject, Schedule } from "../types";
@@ -46,5 +45,4 @@ export default async function HomePage() {
   );
 }
 
-export const revalidate = 0;
 export const dynamic = "force-dynamic";
