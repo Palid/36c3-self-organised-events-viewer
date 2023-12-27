@@ -78,7 +78,16 @@ const cellRenderer = (cell: {
 }) => {
   if (cell.dataKey === "date") {
     const l = DateTime.fromISO(cell.cellData);
-    return l.toFormat("dd, HH:mm");
+    const { day, hour, minute } = l;
+    const mapper = {
+      27: "Day 1",
+      28: "Day 2",
+      29: "Day 3",
+      30: "Day 4",
+    };
+    return `${mapper[day]}, ${day}.12 at ${hour
+      .toString()
+      .padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
   }
   return cell.cellData;
 };
