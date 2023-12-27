@@ -1,8 +1,8 @@
+"use server";
 import { Container } from "@mui/material";
 import EventsList from "../components/EventsList";
 import { ExtendedEvent, RootObject, Schedule } from "../types";
 
-import json from "../db.json";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
@@ -45,3 +45,5 @@ export default async function HomePage() {
     </Container>
   );
 }
+
+export const revalidate = 0;
