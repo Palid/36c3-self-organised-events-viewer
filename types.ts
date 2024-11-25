@@ -1,79 +1,40 @@
-import { SortDirectionType } from "react-virtualized";
+import type { SortDirectionType } from "react-virtualized";
+import { type infer as zodInfer } from "zod"; // Import Zod type inference
+import {
+  type dataSchema,
+  type daySchema,
+  type eventSchema,
+  type linkSchema,
+  type personSchema,
+} from "./app/_schema";
 
+// Import the Zod schemas
+
+// Use Zod to infer TypeScript types
+export type Data = zodInfer<typeof dataSchema>;
+export type Schedule = Data["schedule"];
+export type Conference = Schedule["conference"];
+export type Day = zodInfer<typeof daySchema>;
+export type Event = zodInfer<typeof eventSchema>;
+export type Link = zodInfer<typeof linkSchema>;
+export type Person = zodInfer<typeof personSchema>;
+
+// In-app types
+export type Language = "en" | "de" | "other";
+
+// Define RootObject using inferred types
 export interface RootObject {
   schedule: Schedule;
-}
-
-export interface Schedule {
-  version: string;
-  base_url: string;
-  conference: Conference;
-}
-
-export interface Conference {
-  acronym: string;
-  title: string;
-  start: string;
-  end: string;
-  daysCount: number;
-  timeslot_duration: string;
-  days: Day[];
-}
-
-export interface Day {
-  index: number;
-  date: string;
-  day_start: string;
-  day_end: string;
-  rooms: Rooms;
 }
 
 export interface Rooms {
   [room: string]: Event[];
 }
 
-export type Language = "en" | "de" | "other";
-
-export interface Event {
-  url: string;
-  id: number;
-  guid: string;
-  logo?: string;
-  date: string;
-  start: string;
-  duration: string;
-  room: string;
-  slug: string;
-  title: string;
-  subtitle: string;
-  track: string;
-  type: string;
-  language: Language;
-  abstract: string;
-  description: string;
-  recording_license: string;
-  do_not_record: boolean;
-  persons: Person[];
-  links: Link[];
-  attachments: Link[][];
-}
-
 export interface ExtendedEvent extends Event {
-  room: string;
   day: number;
 }
 
-export interface Link {
-  url: string;
-  title: string;
-}
-
-export interface Person {
-  id: number;
-  public_name: string;
-}
-
-// In-app types
 export type TAvailableFields = keyof Event;
 
 export type Filters = {
@@ -98,11 +59,11 @@ export const AvailableFields: TAvailableFields[] = [
   // "recording_license",
   // "do_not_record",
   // "links",
-  // "attachments"
+  // "attachments",
   // "abstract",
   // "language",
   // "url",
-  // "persons"
+  // "persons",
   // "start",
   // "track",
   "title",

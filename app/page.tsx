@@ -1,6 +1,6 @@
 import { Container } from "@mui/material";
 import EventsList from "../components/EventsList";
-import { ExtendedEvent, RootObject, Schedule } from "../types";
+import { Data, ExtendedEvent, Schedule } from "../types";
 
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -8,16 +8,29 @@ import { resolve } from "path";
 async function fetchData() {
   if (process.env.USE_FAKE_EVENTS === "true") {
     const json = readFileSync(resolve(__dirname, "../", "db.json"), "utf-8");
-    return JSON.parse(json);
+    const parsed = JSON.parse(json);
+    return {
+      data: parseData(parsed.schedule),
+      version: parsed.schedule.version,
+    };
   }
-  const data = await fetch(process.env.SCHEDULE_URI, {
-    next: {
-      revalidate: 1000 * 5 * 60, // 5minutes
-    },
-  })
-    .then((x) => x.json())
-    .then((data: RootObject) => parseData(data.schedule));
-  return data;
+  try {
+    const data = await fetch(process.env.SCHEDULE_URI, {
+      next: {
+        revalidate: 1000 * 5 * 60, // 5minutes
+      },
+    })
+      .then((x) => x.json())
+      .then((data: Data) => ({
+        data: parseData(data.schedule),
+        version: data.schedule.version,
+      }));
+
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to fetch data");
+  }
 }
 
 const parseData = (schedule: Schedule): ExtendedEvent[] => {
@@ -37,10 +50,10 @@ const parseData = (schedule: Schedule): ExtendedEvent[] => {
 };
 
 export default async function HomePage() {
-  const data = await fetchData();
+  const { data, version } = await fetchData();
   return (
     <Container style={{ paddingTop: 8, maxWidth: "100%" }}>
-      <EventsList events={data} />
+      <EventsList events={data} version={version} />
     </Container>
   );
 }

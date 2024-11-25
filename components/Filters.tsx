@@ -1,27 +1,27 @@
-import React, { useState, useLayoutEffect } from "react";
-import { Filters, TAvailableFields, AvailableFields } from "../types";
+import { useLayoutEffect, useState } from "react";
+import { AvailableFields, Filters, type TAvailableFields } from "../types";
 
-import capitalize from "lodash/capitalize";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 import {
   Card,
-  CardHeader,
-  IconButton,
-  Collapse,
   CardContent,
-  FormGroup,
+  CardHeader,
+  Checkbox,
+  Collapse,
   FormControl,
   FormControlLabel,
-  Checkbox,
-  RadioGroup,
-  Radio,
-  TextField,
-  InputLabel,
-  Select,
+  FormGroup,
+  IconButton,
   Input,
+  InputLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  TextField,
 } from "@mui/material";
-import ExpandMore from "@mui/icons-material/ExpandMore";
-import ExpandLess from "@mui/icons-material/ExpandLess";
+import capitalize from "lodash/capitalize";
 
 export const ListFilters = ({
   filters,
@@ -60,16 +60,6 @@ export const ListFilters = ({
       />
       <Collapse in={expanded} timeout={300}>
         <CardContent>
-          <style jsx global>
-            {`
-              .MuiCardHeader-root {
-                padding: 0 16px;
-              }
-              .MuiFormControl-root {
-                margin: 0 4px;
-              }
-            `}
-          </style>
           <FormGroup
             row
             style={{

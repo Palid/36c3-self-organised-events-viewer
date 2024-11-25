@@ -1,25 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Column,
-  Table,
-  AutoSizer,
-  SortDirection,
-  defaultTableRowRenderer,
-} from "react-virtualized";
-import {
-  RootObject,
-  Event,
-  Schedule,
-  TAvailableFields,
-  Filters,
-  Sorting,
-  ExtendedEvent,
-} from "../types";
-import { DateTime } from "luxon";
 import capitalize from "lodash/capitalize";
 import sortByFun from "lodash/sortBy";
+import { DateTime } from "luxon";
+import { useState } from "react";
+import {
+  AutoSizer,
+  Column,
+  SortDirection,
+  Table,
+  defaultTableRowRenderer,
+} from "react-virtualized";
+import { ExtendedEvent, Filters, Sorting, TAvailableFields } from "../types";
 import { ListFilters } from "./Filters";
 
 import { Paper } from "@mui/material";
@@ -110,7 +102,13 @@ const foundDay = (function getChosenDay() {
   }
 })();
 
-const EventsList = ({ events }: { events: ExtendedEvent[] }) => {
+const EventsList = ({
+  events,
+  version,
+}: {
+  events: ExtendedEvent[];
+  version: string;
+}) => {
   const [filters, setFilters] = useState<Filters>({
     day: foundDay || 0,
     languages: {
@@ -183,65 +181,9 @@ const EventsList = ({ events }: { events: ExtendedEvent[] }) => {
             )}
           </AutoSizer>
         </Paper>
-        <style jsx>
-          {`
-            .TableContainer {
-              display: flex;
-              flex: 1;
-              margin: 8px 0;
-              min-height: calc(100vh - 72px - 24px);
-            }
-            @supports (-webkit-appearance: none) {
-              .TableContainer {
-                max-height: calc(100vh - 72px - 56px);
-              }
-            }
-          `}
-        </style>
-        <style jsx global>
-          {`
-            .ReactVirtualized__Table {
-              font-family: "Roboto Condensed", sans-serif;
-              font-size: 14;
-              background-color: #fff;
-            }
-            .ReactVirtualized__Table__row {
-              display: flex;
-              align-items: center;
-              flex-direction: row;
-              border-bottom: 1px solid rgba(60, 60, 70, 0.12);
-            }
-            .ReactVirtualized__Table__headerRow {
-              display: flex;
-              align-items: center;
-              flex-direction: row;
-              padding-right: 0 !important;
-              border-bottom: 1px solid rgba(60, 60, 70, 0.12);
-            }
-            .ReactVirtualized__Table__rowColumn {
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              overflow: hidden;
-              padding-left: 8px;
-              padding-right: 8px;
-            }
-            .ReactVirtualized__Table__headerColumn {
-              display: inline-block;
-              padding: 0 10px;
-              overflow: hidden;
-              max-width: 100%;
-              font-weight: bold;
-            }
-            .ReactVirtualized__Table__headerTruncatedText {
-              display: inline-block;
-              max-width: 100%;
-              white-space: nowrap;
-              text-overflow: ellipsis;
-              overflow: hidden;
-            }
-          `}
-        </style>
       </div>
+      <p>Version: {version}</p>
+
     </>
   );
 };

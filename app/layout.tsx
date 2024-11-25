@@ -1,3 +1,5 @@
+import "../public/app.css";
+
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
 import { Analytics } from "@vercel/analytics/react";
 

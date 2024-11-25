@@ -1,0 +1,85 @@
+body {
+  margin: 0;
+  font-family: "Roboto Condensed", -apple-system, BlinkMacSystemFont,
+    Avenir Next, Avenir, Helvetica, sans-serif;
+  font-size: 14;
+}
+
+nav {
+  text-align: center;
+}
+nav > ul {
+  display: flex;
+  justify-content: space-between;
+}
+nav > ul {
+  padding: 4px 16px;
+}
+nav > li {
+  display: flex;
+  padding: 6px 8px;
+}
+nav > a {
+  color: #067df7;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.ReactVirtualized__Table {
+  font-family: "Roboto Condensed", sans-serif;
+  font-size: 14;
+  background-color: #fff;
+}
+.ReactVirtualized__Table__row {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  border-bottom: 1px solid rgba(60, 60, 70, 0.12);
+}
+.ReactVirtualized__Table__headerRow {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  padding-right: 0 !important;
+  border-bottom: 1px solid rgba(60, 60, 70, 0.12);
+}
+.ReactVirtualized__Table__rowColumn {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.ReactVirtualized__Table__headerColumn {
+  display: inline-block;
+  padding: 0 10px;
+  overflow: hidden;
+  max-width: 100%;
+  font-weight: bold;
+}
+.ReactVirtualized__Table__headerTruncatedText {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.TableContainer {
+  display: flex;
+  flex: 1;
+  margin: 8px 0;
+  min-height: calc(100vh - 72px - 24px);
+}
+@supports (-webkit-appearance: none) {
+  .TableContainer {
+    max-height: calc(100vh - 72px - 56px);
+  }
+}
+
+.MuiCardHeader-root {
+  padding: 0 16px;
+}
+.MuiFormControl-root {
+  margin: 0 4px;
+}
