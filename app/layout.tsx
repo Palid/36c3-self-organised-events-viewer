@@ -3,11 +3,9 @@ import "../public/app.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
 import { Analytics } from "@vercel/analytics/react";
 
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "37C3 event viewer",
-  description: "Simple app to view 37C3 events",
+export const metadata = {
+  title: `${process.env.EVENT_NAME} event viewer`,
+  description: `Simple app to view ${process.env.EVENT_NAME} events`,
 };
 
 export default function RootLayout({

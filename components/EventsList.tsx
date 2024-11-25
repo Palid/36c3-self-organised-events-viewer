@@ -11,7 +11,12 @@ import {
   Table,
   defaultTableRowRenderer,
 } from "react-virtualized";
-import { ExtendedEvent, Filters, Sorting, TAvailableFields } from "../types";
+import {
+  type ExtendedEvent,
+  type Filters,
+  type Sorting,
+  type TAvailableFields,
+} from "../types";
 import { ListFilters } from "./Filters";
 
 import { Paper } from "@mui/material";
@@ -183,7 +188,6 @@ const EventsList = ({
         </Paper>
       </div>
       <p>Version: {version}</p>
-
     </>
   );
 };

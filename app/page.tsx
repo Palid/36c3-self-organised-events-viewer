@@ -1,6 +1,6 @@
 import { Container } from "@mui/material";
 import EventsList from "../components/EventsList";
-import { Data, ExtendedEvent, Schedule } from "../types";
+import { type Data, type ExtendedEvent, type Schedule } from "../types";
 
 import { readFileSync } from "fs";
 import { resolve } from "path";

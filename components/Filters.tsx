@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState } from "react";
-import { AvailableFields, Filters, type TAvailableFields } from "../types";
+import { AvailableFields, type Filters, type TAvailableFields } from "../types";
 
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
