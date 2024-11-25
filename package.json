@@ -21,7 +21,7 @@
     "@vercel/analytics": "^1.1.1",
     "lodash": "^4.17.21",
     "luxon": "^3.4.4",
-    "next": "^14.0.4",
+    "next": "^14.2.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-virtualized": "^9.22.5",
