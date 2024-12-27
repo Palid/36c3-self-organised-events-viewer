@@ -40,7 +40,7 @@ export const ListFilters = ({
     }
   }, [expanded]);
 
-  const { languages, fields } = filters;
+  const { languages, fields, includeSelfOrganized, includeMainSessions } = filters;
   return (
     <Card>
       <CardHeader
@@ -65,13 +65,12 @@ export const ListFilters = ({
             style={{
               display: "flex",
               flex: 1,
-              justifyContent: "space-between",
             }}
             className="FiltersForm"
           >
             <FormControl
               style={{
-                flexDirection: "row",
+                flexDirection: "column",
               }}
             >
               <FormControlLabel
@@ -127,10 +126,61 @@ export const ListFilters = ({
                 }
               />
             </FormControl>
+            <FormControl
+              style={{
+                flexDirection: "column",
+              }}
+            >
+              <FormControlLabel
+                label="Main sessions"
+                control={
+                  <Checkbox
+                    id="include_main_sessions"
+                    checked={includeMainSessions}
+                    onChange={(e) => {
+                      updateFilters({
+                        includeMainSessions: e.target.checked,
+                      });
+                    }}
+                  />
+                }
+              />
+
+              <FormControlLabel
+                label="Self organized"
+                control={
+                  <Checkbox
+                    id="include_self_organized"
+                    checked={includeSelfOrganized}
+                    onChange={(e) => {
+                      updateFilters({
+                        includeSelfOrganized: e.target.checked,
+                      });
+                    }}
+                  />
+                }
+              />
+            </FormControl>
+
+            <FormControl
+            >
+              <FormControlLabel label="Show finished sessions" control={
+                <Checkbox
+                  id="show_finished"
+                  checked={filters.showFinished}
+                  onChange={(e) => {
+                    updateFilters({
+                      showFinished: e.target.checked,
+                    });
+                  }}
+                />
+              } />
+            </FormControl>
+
 
             <RadioGroup
               style={{
-                flexDirection: "row",
+                flexDirection: "column",
               }}
               aria-label="Chosen day"
               name="day"
@@ -153,16 +203,11 @@ export const ListFilters = ({
                 );
               })}
             </RadioGroup>
-            <TextField
-              id="filter"
-              label="Filter in visible fields"
-              variant="outlined"
-              onChange={(e) => {
-                updateFilters({
-                  textFilter: e.target.value,
-                });
-              }}
-            />
+          </FormGroup>
+          <FormGroup sx={{
+            paddingTop: 4
+          }}>
+
             <FormControl>
               <InputLabel id="demo-mutiple-name-label">Fields</InputLabel>
               <Select
@@ -182,6 +227,21 @@ export const ListFilters = ({
                   </MenuItem>
                 ))}
               </Select>
+            </FormControl>
+
+            <FormControl sx={{
+              paddingTop: 2
+            }}>
+              <TextField
+                id="filter"
+                label="Filter in visible fields"
+                variant="outlined"
+                onChange={(e) => {
+                  updateFilters({
+                    textFilter: e.target.value,
+                  });
+                }}
+              />
             </FormControl>
           </FormGroup>
         </CardContent>

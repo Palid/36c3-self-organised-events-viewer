@@ -3,7 +3,7 @@
 import capitalize from "lodash/capitalize";
 import sortByFun from "lodash/sortBy";
 import { DateTime } from "luxon";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AutoSizer,
   Column,
@@ -12,57 +12,21 @@ import {
   defaultTableRowRenderer,
 } from "react-virtualized";
 import {
+  LiveStatus,
+  ScheduleType,
+  type EventWithLiveStatus,
   type ExtendedEvent,
   type Filters,
+  type PresentableEvent,
   type Sorting,
   type TAvailableFields,
 } from "../types";
 import { ListFilters } from "./Filters";
 
 import { Paper } from "@mui/material";
+import { isAfter, isBefore, subMinutes } from "date-fns";
+import { add } from "date-fns/add";
 import Link from "next/link";
-
-const prepareData = (
-  filters: Filters,
-  sorting: Sorting,
-  data: ExtendedEvent[]
-) => {
-  const { day, languages, textFilter, fields } = filters;
-  const { sortBy, sortDirection } = sorting;
-  let preparedData = data;
-  // Show only self organised
-  // let preparedData = data.filter(x => x.track === "self organized sessions");
-  preparedData = preparedData.filter((event) => event.day === day);
-  preparedData = preparedData.filter((event) => {
-    if (languages.en && event.language === "en") {
-      return true;
-    } else if (languages.de && event.language === "de") {
-      return true;
-    } else if (
-      languages.other &&
-      event.language !== "de" &&
-      event.language !== "en"
-    ) {
-      return true;
-    }
-  });
-  if (textFilter) {
-    const lowerF = textFilter.toLowerCase();
-    preparedData = preparedData.filter((event) => {
-      for (const field of fields) {
-        const z = event[field];
-        if (typeof z === "string" && z.toLowerCase().includes(lowerF)) {
-          return true;
-        }
-      }
-    });
-  }
-  preparedData = sortByFun(preparedData, [sortBy]);
-  if (sortDirection === SortDirection.DESC) {
-    preparedData = preparedData.reverse();
-  }
-  return preparedData;
-};
 
 const cellRenderer = (cell: {
   cellData: any;
@@ -107,22 +71,103 @@ const foundDay = (function getChosenDay() {
   }
 })();
 
+function useFilterEvents(data: EventWithLiveStatus[], filters: Filters, sorting: Sorting) {
+
+  const { sortBy, sortDirection } = sorting;
+  const { day, languages, textFilter, fields } = filters;
+
+  const dayFiltered = useMemo(() => data.filter(x => x.day === day), [data, day])
+
+  const finishedFiltered = useMemo(() => {
+    if (filters.showFinished) {
+      return dayFiltered
+    }
+    return dayFiltered.filter(x => x.liveStatus !== LiveStatus.FINISHED)
+  }, [dayFiltered, filters.showFinished])
+
+  const langFiltered = useMemo(() => finishedFiltered.filter(x => languages.en && x.language === "en" || languages.de && x.language === "de" || languages.other && x.language !== "de" && x.language !== "en"), [finishedFiltered, languages])
+
+  const sessionTypeFiltered = useMemo(() => {
+    if (filters.includeMainSessions && filters.includeSelfOrganized) {
+      return langFiltered
+    }
+    if (filters.includeMainSessions && !filters.includeSelfOrganized) {
+      return langFiltered.filter(x => x.category === ScheduleType.MAIN_EVENT)
+    }
+    if (!filters.includeMainSessions && filters.includeSelfOrganized) {
+      return langFiltered.filter(x => x.category === ScheduleType.SELF_ORGANIZED_EVENT)
+    }
+  }, [langFiltered, filters.includeMainSessions, filters.includeSelfOrganized])
+
+  const textFiltered = useMemo(() => {
+    if (!textFilter) return sessionTypeFiltered
+    const lowerF = textFilter.toLowerCase();
+    return sessionTypeFiltered.filter((event) => {
+      for (const field of fields) {
+        const z = event[field];
+        const foundAnything = typeof z === "string" && z.toLowerCase().includes(lowerF)
+        if (foundAnything) {
+          return true
+        }
+      }
+      return false;
+    })
+  }, [sessionTypeFiltered, textFilter])
+
+  const sorted = useMemo(() => {
+    const sortedData = sortByFun(textFiltered, [sortBy])
+    if (sortDirection === SortDirection.DESC) {
+      return sortedData.reverse()
+    }
+    return sortedData
+  }, [textFiltered, sortBy])
+
+  return sorted;
+}
+
+
+function getLiveStatus(date: Date, event: ExtendedEvent): LiveStatus {
+  const [hours = '0', minutes = '0'] = event.duration.split(':')
+  const eventDate = new Date(event.date)
+  const eventDateWithDuration = add(eventDate, { hours: parseInt(hours, 10), minutes: parseInt(minutes, 10) })
+  const hasStarted = isAfter(date, eventDate)
+  const isBeforeEndDate = isBefore(date, eventDateWithDuration)
+
+  if (hasStarted && isBeforeEndDate) {
+    return LiveStatus.LIVE
+  }
+  if (hasStarted && !isBeforeEndDate) {
+    return LiveStatus.FINISHED
+  }
+  if (!hasStarted) {
+    return LiveStatus.NOT_LIVE
+  }
+
+  return LiveStatus.UNKNOWN
+
+}
+
+
+
 const EventsList = ({
-  events,
-  version,
+  schedule,
+  selfOrganizedSchedule
 }: {
-  events: ExtendedEvent[];
-  version: string;
+  schedule: PresentableEvent,
+  selfOrganizedSchedule: PresentableEvent
 }) => {
   const [filters, setFilters] = useState<Filters>({
     day: foundDay || 0,
     languages: {
       en: true,
       de: false,
-      other: false,
+      other: true,
     },
     fields: ["room", "title", "date"],
     textFilter: "",
+    includeMainSessions: true,
+    includeSelfOrganized: true,
+    showFinished: false
   });
 
   const updateFilters = (newFilters: Partial<Filters>) => {
@@ -134,9 +179,27 @@ const EventsList = ({
     sortDirection: SortDirection.ASC,
   });
 
-  const { sortBy, sortDirection } = sorting;
+  const events = useMemo(() => [
+    ...schedule.data,
+    ...selfOrganizedSchedule.data
+  ], [schedule, selfOrganizedSchedule])
 
-  const renderableData = prepareData(filters, sorting, events);
+  const now = new Date()
+  const acceptableTimeDrift = subMinutes(now, 5)
+  const eventsWithLive = events.map(event => {
+    if (!event.duration || !event.date) {
+      return {
+        ...event,
+        liveStatus: LiveStatus.UNKNOWN
+      }
+    }
+    return {
+      ...event,
+      liveStatus: getLiveStatus(acceptableTimeDrift, event)
+    }
+  })
+
+  const renderableData = useFilterEvents(eventsWithLive, filters, sorting);
 
   return (
     <>
@@ -153,6 +216,12 @@ const EventsList = ({
                 rowGetter={({ index }) => renderableData[index]}
                 rowCount={renderableData.length}
                 rowRenderer={(props) => {
+                  if (props.rowData.liveStatus === LiveStatus.UNKNOWN) {
+                    props.className += ' event-no-duration'
+                  } else if (props.rowData.liveStatus === LiveStatus.LIVE) {
+                    props.className += ' event-live'
+                  }
+
                   return (
                     <Link
                       href={props.rowData.url}
@@ -162,9 +231,11 @@ const EventsList = ({
                       {defaultTableRowRenderer(props)}
                     </Link>
                   );
-                }}
-                sortBy={sortBy}
-                sortDirection={sortDirection}
+
+                }
+                }
+                sortBy={sorting.sortBy}
+                sortDirection={sorting.sortDirection}
                 sort={({ sortBy, sortDirection }) => {
                   setSorting({
                     sortBy: sortBy as TAvailableFields,
@@ -187,7 +258,8 @@ const EventsList = ({
           </AutoSizer>
         </Paper>
       </div>
-      <p>Version: {version}</p>
+      <p>Schedule version: {schedule.version}</p>
+      <p>Self organized schedule version: {selfOrganizedSchedule.version}</p>
     </>
   );
 };

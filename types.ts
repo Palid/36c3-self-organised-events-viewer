@@ -31,8 +31,25 @@ export interface Rooms {
   [room: string]: Event[];
 }
 
+export const enum ScheduleType {
+  MAIN_EVENT,
+  SELF_ORGANIZED_EVENT
+}
+
+export const enum LiveStatus {
+  LIVE,
+  NOT_LIVE,
+  FINISHED,
+  UNKNOWN
+}
+
 export interface ExtendedEvent extends Event {
   day: number;
+  category: ScheduleType;
+}
+
+export interface EventWithLiveStatus extends ExtendedEvent {
+  liveStatus: LiveStatus;
 }
 
 export type TAvailableFields = keyof Event;
@@ -44,6 +61,9 @@ export type Filters = {
   languages: {
     [key in Language]: boolean;
   };
+  includeMainSessions: boolean;
+  includeSelfOrganized: boolean;
+  showFinished: boolean;
 };
 
 export type Sorting = {
@@ -74,3 +94,9 @@ export const AvailableFields: TAvailableFields[] = [
   "subtitle",
   "description",
 ];
+
+
+export type PresentableEvent = {
+  data: ExtendedEvent[],
+  version: string,
+}

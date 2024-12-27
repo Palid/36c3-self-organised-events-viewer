@@ -83,3 +83,11 @@ nav > a {
 .MuiFormControl-root {
   margin: 0 4px;
 }
+
+.event-no-duration {
+  background-color: rgba(255, 0, 0, 0.2);
+}
+
+.event-live {
+  background-color: rgba(100, 255, 0, 0.2);
+}
