@@ -1,4 +1,4 @@
-import type { SortDirectionType } from "react-virtualized";
+type SortDirectionType = "ASC" | "DESC";
 import { type infer as zodInfer } from "zod"; // Import Zod type inference
 import {
   type dataSchema,
@@ -54,6 +54,8 @@ export interface EventWithLiveStatus extends ExtendedEvent {
 
 export type TAvailableFields = keyof Event;
 
+export type SessionType = "official" | "assembly" | "sos" | "other";
+
 export type Filters = {
   day: number;
   fields: TAvailableFields[];
@@ -61,8 +63,9 @@ export type Filters = {
   languages: {
     [key in Language]: boolean;
   };
-  includeMainSessions: boolean;
-  includeSelfOrganized: boolean;
+  sessionTypes: {
+    [key in SessionType]: boolean;
+  };
   showFinished: boolean;
 };
 

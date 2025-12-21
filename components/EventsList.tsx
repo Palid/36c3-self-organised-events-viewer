@@ -3,17 +3,10 @@
 import capitalize from "lodash/capitalize";
 import sortByFun from "lodash/sortBy";
 import { DateTime } from "luxon";
-import { useMemo, useState } from "react";
-import {
-  AutoSizer,
-  Column,
-  SortDirection,
-  Table,
-  defaultTableRowRenderer,
-} from "react-virtualized";
+import { useMemo, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   LiveStatus,
-  ScheduleType,
   type EventWithLiveStatus,
   type ExtendedEvent,
   type Filters,
@@ -28,29 +21,18 @@ import { isAfter, isBefore, subMinutes } from "date-fns";
 import { add } from "date-fns/add";
 import Link from "next/link";
 
-const cellRenderer = (cell: {
-  cellData: any;
-  columnData: any;
-  columnIndex: number;
-  dataKey: string;
-  isScrolling: boolean;
-  rowData: any;
-  rowIndex: number;
-}) => {
-  if (cell.dataKey === "date") {
-    const l = DateTime.fromISO(cell.cellData);
-    const { day, hour, minute } = l;
-    const mapper = {
-      27: "Day 1",
-      28: "Day 2",
-      29: "Day 3",
-      30: "Day 4",
-    };
-    return `${mapper[day]}, ${day}.12 at ${hour
-      .toString()
-      .padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-  }
-  return cell.cellData;
+const formatDate = (date: string) => {
+  const l = DateTime.fromISO(date);
+  const { day, hour, minute } = l;
+  const mapper: Record<number, string> = {
+    27: "Day 1",
+    28: "Day 2",
+    29: "Day 3",
+    30: "Day 4",
+  };
+  return `${mapper[day] || `Day ?`}, ${day}.12 at ${hour
+    .toString()
+    .padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 };
 
 const foundDay = (function getChosenDay() {
@@ -71,83 +53,84 @@ const foundDay = (function getChosenDay() {
   }
 })();
 
-function useFilterEvents(data: EventWithLiveStatus[], filters: Filters, sorting: Sorting) {
+type SortDirection = "ASC" | "DESC";
 
+function useFilterEvents(data: EventWithLiveStatus[], filters: Filters, sorting: Sorting) {
   const { sortBy, sortDirection } = sorting;
   const { day, languages, textFilter, fields } = filters;
 
-  const dayFiltered = useMemo(() => data.filter(x => x.day === day), [data, day])
+  const dayFiltered = useMemo(() => data.filter(x => x.day === day), [data, day]);
 
   const finishedFiltered = useMemo(() => {
     if (filters.showFinished) {
-      return dayFiltered
+      return dayFiltered;
     }
-    return dayFiltered.filter(x => x.liveStatus !== LiveStatus.FINISHED)
-  }, [dayFiltered, filters.showFinished])
+    return dayFiltered.filter(x => x.liveStatus !== LiveStatus.FINISHED);
+  }, [dayFiltered, filters.showFinished]);
 
-  const langFiltered = useMemo(() => finishedFiltered.filter(x => languages.en && x.language === "en" || languages.de && x.language === "de" || languages.other && x.language !== "de" && x.language !== "en"), [finishedFiltered, languages])
+  const langFiltered = useMemo(() => finishedFiltered.filter(x =>
+    (languages.en && x.language === "en") ||
+    (languages.de && x.language === "de") ||
+    (languages.other && x.language !== "de" && x.language !== "en")
+  ), [finishedFiltered, languages]);
 
   const sessionTypeFiltered = useMemo(() => {
-    if (filters.includeMainSessions && filters.includeSelfOrganized) {
-      return langFiltered
-    }
-    if (filters.includeMainSessions && !filters.includeSelfOrganized) {
-      return langFiltered.filter(x => x.category === ScheduleType.MAIN_EVENT)
-    }
-    if (!filters.includeMainSessions && filters.includeSelfOrganized) {
-      return langFiltered.filter(x => x.category === ScheduleType.SELF_ORGANIZED_EVENT)
-    }
-  }, [langFiltered, filters.includeMainSessions, filters.includeSelfOrganized])
+    const { sessionTypes } = filters;
+    return langFiltered.filter(event => {
+      const kind = event.type?.toLowerCase() || '';
+      if (kind === 'official' && sessionTypes.official) return true;
+      if (kind === 'assembly' && sessionTypes.assembly) return true;
+      if (kind === 'sos' && sessionTypes.sos) return true;
+      if (kind !== 'official' && kind !== 'assembly' && kind !== 'sos' && sessionTypes.other) return true;
+      return false;
+    });
+  }, [langFiltered, filters.sessionTypes]);
 
   const textFiltered = useMemo(() => {
-    if (!textFilter) return sessionTypeFiltered
+    if (!textFilter) return sessionTypeFiltered;
     const lowerF = textFilter.toLowerCase();
-    return sessionTypeFiltered.filter((event) => {
+    return sessionTypeFiltered?.filter((event) => {
       for (const field of fields) {
         const z = event[field];
-        const foundAnything = typeof z === "string" && z.toLowerCase().includes(lowerF)
+        const foundAnything = typeof z === "string" && z.toLowerCase().includes(lowerF);
         if (foundAnything) {
-          return true
+          return true;
         }
       }
       return false;
-    })
-  }, [sessionTypeFiltered, textFilter])
+    });
+  }, [sessionTypeFiltered, textFilter, fields]);
 
   const sorted = useMemo(() => {
-    const sortedData = sortByFun(textFiltered, [sortBy])
-    if (sortDirection === SortDirection.DESC) {
-      return sortedData.reverse()
+    const sortedData = sortByFun(textFiltered, [sortBy]);
+    if (sortDirection === "DESC") {
+      return sortedData.reverse();
     }
-    return sortedData
-  }, [textFiltered, sortBy])
+    return sortedData;
+  }, [textFiltered, sortBy, sortDirection]);
 
   return sorted;
 }
 
-
 function getLiveStatus(date: Date, event: ExtendedEvent): LiveStatus {
-  const [hours = '0', minutes = '0'] = event.duration.split(':')
-  const eventDate = new Date(event.date)
-  const eventDateWithDuration = add(eventDate, { hours: parseInt(hours, 10), minutes: parseInt(minutes, 10) })
-  const hasStarted = isAfter(date, eventDate)
-  const isBeforeEndDate = isBefore(date, eventDateWithDuration)
+  const [hours = '0', minutes = '0'] = event.duration.split(':');
+  const eventDate = new Date(event.date);
+  const eventDateWithDuration = add(eventDate, { hours: parseInt(hours, 10), minutes: parseInt(minutes, 10) });
+  const hasStarted = isAfter(date, eventDate);
+  const isBeforeEndDate = isBefore(date, eventDateWithDuration);
 
   if (hasStarted && isBeforeEndDate) {
-    return LiveStatus.LIVE
+    return LiveStatus.LIVE;
   }
   if (hasStarted && !isBeforeEndDate) {
-    return LiveStatus.FINISHED
+    return LiveStatus.FINISHED;
   }
   if (!hasStarted) {
-    return LiveStatus.NOT_LIVE
+    return LiveStatus.NOT_LIVE;
   }
 
-  return LiveStatus.UNKNOWN
-
+  return LiveStatus.UNKNOWN;
 }
-
-
 
 const EventsList = ({
   schedule,
@@ -165,8 +148,12 @@ const EventsList = ({
     },
     fields: ["room", "title", "date"],
     textFilter: "",
-    includeMainSessions: true,
-    includeSelfOrganized: true,
+    sessionTypes: {
+      official: true,
+      assembly: true,
+      sos: true,
+      other: true,
+    },
     showFinished: false
   });
 
@@ -176,86 +163,143 @@ const EventsList = ({
 
   const [sorting, setSorting] = useState<Sorting>({
     sortBy: "date",
-    sortDirection: SortDirection.ASC,
+    sortDirection: "ASC",
   });
 
   const events = useMemo(() => [
     ...schedule.data,
     ...selfOrganizedSchedule.data
-  ], [schedule, selfOrganizedSchedule])
+  ], [schedule, selfOrganizedSchedule]);
 
-  const now = new Date()
-  const acceptableTimeDrift = subMinutes(now, 5)
+  const now = new Date();
+  const acceptableTimeDrift = subMinutes(now, 5);
   const eventsWithLive = events.map(event => {
     if (!event.duration || !event.date) {
       return {
         ...event,
         liveStatus: LiveStatus.UNKNOWN
-      }
+      };
     }
     return {
       ...event,
       liveStatus: getLiveStatus(acceptableTimeDrift, event)
-    }
-  })
+    };
+  });
 
   const renderableData = useFilterEvents(eventsWithLive, filters, sorting);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: renderableData.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 10,
+  });
+
+  const handleSort = (field: TAvailableFields) => {
+    if (sorting.sortBy === field) {
+      setSorting({
+        sortBy: field,
+        sortDirection: sorting.sortDirection === "ASC" ? "DESC" : "ASC",
+      });
+    } else {
+      setSorting({
+        sortBy: field,
+        sortDirection: "ASC",
+      });
+    }
+  };
+
+  const getCellValue = (event: EventWithLiveStatus, field: TAvailableFields): string => {
+    if (field === "date") {
+      return formatDate(event.date);
+    }
+    const value = event[field];
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    return "";
+  };
+
+  const getRowClassName = (event: EventWithLiveStatus) => {
+    if (event.liveStatus === LiveStatus.UNKNOWN) {
+      return "event-no-duration";
+    }
+    if (event.liveStatus === LiveStatus.LIVE) {
+      return "event-live";
+    }
+    return "";
+  };
 
   return (
     <>
       <ListFilters filters={filters} updateFilters={updateFilters} />
       <div className="TableContainer">
-        <Paper elevation={3} style={{ flex: 1 }}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <Table
-                width={width}
-                height={height}
-                rowHeight={52}
-                headerHeight={56}
-                rowGetter={({ index }) => renderableData[index]}
-                rowCount={renderableData.length}
-                rowRenderer={(props) => {
-                  if (props.rowData.liveStatus === LiveStatus.UNKNOWN) {
-                    props.className += ' event-no-duration'
-                  } else if (props.rowData.liveStatus === LiveStatus.LIVE) {
-                    props.className += ' event-live'
-                  }
-
-                  return (
-                    <Link
-                      href={props.rowData.url}
-                      target="__blank"
-                      color="inherit"
-                    >
-                      {defaultTableRowRenderer(props)}
-                    </Link>
-                  );
-
-                }
-                }
-                sortBy={sorting.sortBy}
-                sortDirection={sorting.sortDirection}
-                sort={({ sortBy, sortDirection }) => {
-                  setSorting({
-                    sortBy: sortBy as TAvailableFields,
-                    sortDirection,
-                  });
-                }}
+        <Paper elevation={3} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {/* Header */}
+          <div className="VirtualTableHeader">
+            {filters.fields.map((field) => (
+              <div
+                key={field}
+                className="VirtualTableHeaderCell"
+                onClick={() => handleSort(field)}
+                style={{ cursor: "pointer" }}
               >
-                {filters.fields.map((field) => (
-                  <Column
-                    key="field"
-                    dataKey={field}
-                    label={capitalize(field)}
-                    width={50}
-                    flexGrow={1}
-                    cellRenderer={cellRenderer}
-                  />
-                ))}
-              </Table>
-            )}
-          </AutoSizer>
+                {capitalize(field)}
+                {sorting.sortBy === field && (
+                  <span>{sorting.sortDirection === "ASC" ? " ▲" : " ▼"}</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Virtualized Body */}
+          <div
+            ref={parentRef}
+            className="VirtualTableBody"
+            style={{
+              height: "calc(100vh - 200px)",
+              overflow: "auto",
+            }}
+          >
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const event = renderableData[virtualRow.index];
+                return (
+                  <Link
+                    key={virtualRow.key}
+                    href={event.url || "#"}
+                    target="_blank"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <div className={`VirtualTableRow ${getRowClassName(event)}`}>
+                      {filters.fields.map((field) => (
+                        <div key={field} className="VirtualTableCell">
+                          {getCellValue(event, field)}
+                        </div>
+                      ))}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </Paper>
       </div>
       <p>Schedule version: {schedule.version}</p>

@@ -40,7 +40,7 @@ export const ListFilters = ({
     }
   }, [expanded]);
 
-  const { languages, fields, includeSelfOrganized, includeMainSessions } = filters;
+  const { languages, fields, sessionTypes } = filters;
   return (
     <Card>
       <CardHeader
@@ -132,29 +132,68 @@ export const ListFilters = ({
               }}
             >
               <FormControlLabel
-                label="Main sessions"
+                label="Official (Main)"
                 control={
                   <Checkbox
-                    id="include_main_sessions"
-                    checked={includeMainSessions}
+                    id="session_official"
+                    checked={sessionTypes.official}
                     onChange={(e) => {
                       updateFilters({
-                        includeMainSessions: e.target.checked,
+                        sessionTypes: {
+                          ...sessionTypes,
+                          official: e.target.checked,
+                        },
                       });
                     }}
                   />
                 }
               />
-
               <FormControlLabel
-                label="Self organized"
+                label="Assembly"
                 control={
                   <Checkbox
-                    id="include_self_organized"
-                    checked={includeSelfOrganized}
+                    id="session_assembly"
+                    checked={sessionTypes.assembly}
                     onChange={(e) => {
                       updateFilters({
-                        includeSelfOrganized: e.target.checked,
+                        sessionTypes: {
+                          ...sessionTypes,
+                          assembly: e.target.checked,
+                        },
+                      });
+                    }}
+                  />
+                }
+              />
+              <FormControlLabel
+                label="Self-Organized (SOS)"
+                control={
+                  <Checkbox
+                    id="session_sos"
+                    checked={sessionTypes.sos}
+                    onChange={(e) => {
+                      updateFilters({
+                        sessionTypes: {
+                          ...sessionTypes,
+                          sos: e.target.checked,
+                        },
+                      });
+                    }}
+                  />
+                }
+              />
+              <FormControlLabel
+                label="Other"
+                control={
+                  <Checkbox
+                    id="session_other"
+                    checked={sessionTypes.other}
+                    onChange={(e) => {
+                      updateFilters({
+                        sessionTypes: {
+                          ...sessionTypes,
+                          other: e.target.checked,
+                        },
                       });
                     }}
                   />
