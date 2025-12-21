@@ -171,6 +171,18 @@ const EventsList = ({
     ...selfOrganizedSchedule.data
   ], [schedule, selfOrganizedSchedule]);
 
+  const sessionCounts = useMemo(() => {
+    const counts = { official: 0, assembly: 0, sos: 0, other: 0 };
+    for (const event of events) {
+      const kind = event.type?.toLowerCase() || '';
+      if (kind === 'official') counts.official++;
+      else if (kind === 'assembly') counts.assembly++;
+      else if (kind === 'sos') counts.sos++;
+      else counts.other++;
+    }
+    return counts;
+  }, [events]);
+
   const now = new Date();
   const acceptableTimeDrift = subMinutes(now, 5);
   const eventsWithLive = events.map(event => {
@@ -302,8 +314,9 @@ const EventsList = ({
           </div>
         </Paper>
       </div>
-      <p>Schedule version: {schedule.version}</p>
-      <p>Self organized schedule version: {selfOrganizedSchedule.version}</p>
+      <p style={{ fontSize: 12, color: '#666' }}>
+        Official: {sessionCounts.official} | Assembly: {sessionCounts.assembly} | SOS: {sessionCounts.sos} | Other: {sessionCounts.other} | Total: {events.length}
+      </p>
     </>
   );
 };
