@@ -14,10 +14,11 @@
     "@emotion/styled": "^11.11.0",
     "@fontsource/material-icons": "^5.0.11",
     "@fontsource/roboto": "^5.0.8",
-    "@mui/icons-material": "^5.15.2",
-    "@mui/lab": "^5.0.0-alpha.158",
-    "@mui/material": "^5.15.2",
-    "@mui/material-nextjs": "^5.15.0",
+    "@mui/icons-material": "^7.0.0",
+    "@mui/lab": "^7.0.0-beta.0",
+    "@mui/material": "^7.0.0",
+    "@mui/material-nextjs": "^7.0.0",
+    "@tanstack/react-virtual": "^3.13.13",
     "@vercel/analytics": "^1.1.1",
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
@@ -26,7 +27,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-use": "^17.6.0",
-    "react-virtualized": "^9.22.5",
     "server-only": "^0.0.1",
     "zod": "^3.23.8"
   },
@@ -35,10 +35,9 @@
     "@types/luxon": "^3.3.7",
     "@types/node": "^20.10.5",
     "@types/react": "19.2.7",
-    "@types/react-virtualized": "^9.21.29",
-    "typescript": "^5.3.3",
     "eslint": "^9",
-    "eslint-config-next": "16.1.0"
+    "eslint-config-next": "16.1.0",
+    "typescript": "^5.3.3"
   },
   "overrides": {
     "@types/react": "19.2.7"
