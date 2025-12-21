@@ -22,18 +22,32 @@ type RoomMap = Map<string, string>;
 
 // Fetch rooms from schedule.json to get UUID -> name mapping
 async function fetchRoomMap(): Promise<RoomMap> {
-  const response = await fetch(env.SCHEDULE_URI, {
-    next: { revalidate: 3600, tags: ["rooms"] }, // 1 hour cache for rooms (in seconds)
-  });
-  const data = await response.json();
-  const rooms = data?.schedule?.conference?.rooms || [];
-  const roomMap = new Map<string, string>();
-  for (const room of rooms) {
-    if (room.guid && room.name) {
-      roomMap.set(room.guid, room.name);
+  try {
+    const response = await fetch(env.SCHEDULE_URI, {
+      next: { revalidate: 3600, tags: ["rooms"] }, // 1 hour cache for rooms (in seconds)
+    });
+    if (!response.ok) {
+      console.warn(`Room fetch failed: ${response.status}`);
+      return new Map();
     }
+    const contentType = response.headers.get("content-type");
+    if (!contentType?.includes("application/json")) {
+      console.warn(`Room fetch returned non-JSON: ${contentType}`);
+      return new Map();
+    }
+    const data = await response.json();
+    const rooms = data?.schedule?.conference?.rooms || [];
+    const roomMap = new Map<string, string>();
+    for (const room of rooms) {
+      if (room.guid && room.name) {
+        roomMap.set(room.guid, room.name);
+      }
+    }
+    return roomMap;
+  } catch (error) {
+    console.warn("Failed to fetch room map:", error);
+    return new Map();
   }
-  return roomMap;
 }
 
 // Map API event to ExtendedEvent format
@@ -89,10 +103,36 @@ async function fetchAllEvents(): Promise<{
     }),
   ]);
 
-  const data = await eventsResponse.json();
-  const events = selfOrganizedEventsArraySchema.parse(data);
+  // Check if events API returned valid response
+  if (!eventsResponse.ok) {
+    console.warn(`Events fetch failed: ${eventsResponse.status}`);
+    return {
+      schedule: { data: [], version: `API error (${eventsResponse.status})` },
+      selfOrganizedSchedule: { data: [], version: "unavailable" },
+    };
+  }
 
-  const mappedEvents = events.map((e) => mapEvent(e, roomMap));
+  const contentType = eventsResponse.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    console.warn(`Events fetch returned non-JSON: ${contentType}`);
+    return {
+      schedule: { data: [], version: "API returned non-JSON" },
+      selfOrganizedSchedule: { data: [], version: "unavailable" },
+    };
+  }
+
+  const data = await eventsResponse.json();
+  const parseResult = selfOrganizedEventsArraySchema.safeParse(data);
+
+  if (!parseResult.success) {
+    console.warn("Events parse failed:", parseResult.error);
+    return {
+      schedule: { data: [], version: "parse error" },
+      selfOrganizedSchedule: { data: [], version: "unavailable" },
+    };
+  }
+
+  const mappedEvents = parseResult.data.map((e) => mapEvent(e, roomMap));
 
   // Split by category based on 'kind' field
   const mainEvents = mappedEvents.filter(
@@ -140,8 +180,11 @@ async function fetchData(): Promise<{
   try {
     return await fetchAllEvents();
   } catch (error) {
-    console.error(error);
-    throw new Error("Failed to fetch data");
+    console.error("Failed to fetch data:", error);
+    return {
+      schedule: { data: [], version: "fetch error" },
+      selfOrganizedSchedule: { data: [], version: "unavailable" },
+    };
   }
 }
 
