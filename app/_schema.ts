@@ -103,3 +103,23 @@ export const dataSchema = z.object({
   $schema: z.string(),
   schedule: scheduleSchema,
 });
+
+// Self-organized events have a different structure (flat array from events.json)
+export const selfOrganizedEventSchema = z.object({
+  id: z.string(),
+  kind: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  url: z.string().nullable().optional(),
+  track: z.string().nullable().optional(),
+  assembly: z.string().nullable().optional(),
+  room: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  language: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  schedule_start: z.string(),
+  schedule_duration: z.string(),
+  schedule_end: z.string(),
+});
+
+export const selfOrganizedEventsArraySchema = z.array(selfOrganizedEventSchema);
